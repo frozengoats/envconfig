@@ -1,4 +1,6 @@
 name: execute release actions
+permissions:
+  contents: write
 
 on:
   push:
