@@ -14,7 +14,7 @@ jobs:
         fetch-depth: 0
 
     - name: get version
-      uses: frozengoats/github-actions/version@version-v0
+      uses: frozengoats/github-actions/version@version-v1
       with:
         filename: VERSION
 
@@ -24,7 +24,7 @@ jobs:
     - name: test
       run: make test
 
-    - uses: frozengoats/github-actions/release@release-v0
+    - uses: frozengoats/github-actions/release@release-v1
       with:
         create-release: true
         create-version-tag: true
