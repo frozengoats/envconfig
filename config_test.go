@@ -220,3 +220,12 @@ func TestNoDefault(t *testing.T) {
 	err := Apply(&stuff, WithErrorOnMissing())
 	assert.Error(t, err)
 }
+
+func TestNoDefaultHasValue(t *testing.T) {
+	var stuff struct {
+		TestName string `env:"APP_TEST_NAME"`
+	}
+	err := Apply(&stuff, WithErrorOnMissing())
+	assert.NoError(t, err)
+	assert.Equal(t, stuff.TestName, "hello")
+}

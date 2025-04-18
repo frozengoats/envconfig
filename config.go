@@ -178,7 +178,7 @@ func Apply(target any, options ...ConfigOption) error {
 		}
 
 		if opt.errorOnMissing && envValue == "" {
-			return fmt.Errorf("env var %s was not provided and has no default", envValue)
+			return fmt.Errorf("env var %s was not provided and has no default", envVar)
 		}
 		if envValue != "" {
 			err := applyValue(f, envValue)
