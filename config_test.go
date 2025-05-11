@@ -229,3 +229,12 @@ func TestNoDefaultHasValue(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, stuff.TestName, "hello")
 }
+
+func TestByteArray(t *testing.T) {
+	var stuff struct {
+		RealData []byte `env:"EC_SOME_ENCODED_STRING" default:"c2lsbHkgd2FiYml0"`
+	}
+	err := Apply(&stuff)
+	assert.NoError(t, err)
+	assert.Equal(t, stuff.RealData, []byte("silly wabbit"))
+}

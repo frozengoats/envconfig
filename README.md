@@ -13,6 +13,7 @@ configure your application from the environment
     Interval  time.Duration `env:"APP_DURATION" default:"3h"`
     Enabled   bool          `env:"APP_ENABLED" default:"false"`
     Name      string        `env:"APP_NAME"`
+    JsonData  []byte        `env:"APP_JSON_DATA" default:"ImhlbGxvIgo="`   // any byte array data must be standard base64 encoded
   }
 
   err := envconfig.Apply(&config)

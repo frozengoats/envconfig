@@ -1,6 +1,7 @@
 package envconfig
 
 import (
+	"encoding/base64"
 	"fmt"
 	"os"
 	"reflect"
@@ -106,6 +107,16 @@ func setBool(fv reflect.Value, value string) error {
 	return nil
 }
 
+func setByteArray(fv reflect.Value, value string) error {
+	decBytes, err := base64.StdEncoding.DecodeString(value)
+	if err != nil {
+		return fmt.Errorf("environment variable was not encoded in standard base64")
+	}
+
+	fv.SetBytes(decBytes)
+	return nil
+}
+
 func applyValue(fv reflect.Value, envValue string) error {
 	var err error
 	switch fv.Kind() {
@@ -135,6 +146,14 @@ func applyValue(fv reflect.Value, envValue string) error {
 		fv.SetString(envValue)
 	case reflect.Bool:
 		err = setBool(fv, envValue)
+	case reflect.Slice:
+		ifx := fv.Interface()
+		switch ifx.(type) {
+		case []byte:
+			err = setByteArray(fv, envValue)
+		default:
+			return fmt.Errorf("unknown interface type built on array")
+		}
 	default:
 		return fmt.Errorf("unexpected field type %s", fv.Kind().String())
 	}
