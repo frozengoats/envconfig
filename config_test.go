@@ -230,11 +230,39 @@ func TestNoDefaultHasValue(t *testing.T) {
 	assert.Equal(t, stuff.TestName, "hello")
 }
 
-func TestByteArray(t *testing.T) {
+func TestEncodedByteArray(t *testing.T) {
+	var stuff struct {
+		RealData []byte `env:"EC_SOME_ENCODED_STRING" default:"c2lsbHkgd2FiYml0" encoded:"true"`
+	}
+	err := Apply(&stuff)
+	assert.NoError(t, err)
+	assert.Equal(t, stuff.RealData, []byte("silly wabbit"))
+}
+
+func TestNonEncodedByteArray(t *testing.T) {
 	var stuff struct {
 		RealData []byte `env:"EC_SOME_ENCODED_STRING" default:"c2lsbHkgd2FiYml0"`
 	}
 	err := Apply(&stuff)
 	assert.NoError(t, err)
-	assert.Equal(t, stuff.RealData, []byte("silly wabbit"))
+	assert.Equal(t, stuff.RealData, []byte("c2lsbHkgd2FiYml0"))
+}
+
+func TestSet(t *testing.T) {
+	var stuff struct {
+		RealData Set `env:"EC_MY_ITEMS" default:"abc,def"`
+	}
+	err := Apply(&stuff)
+	assert.NoError(t, err)
+	assert.True(t, stuff.RealData.Contains("abc"))
+	assert.True(t, stuff.RealData.Contains("def"))
+}
+
+func TestEmptySet(t *testing.T) {
+	var stuff struct {
+		RealData Set `env:"EC_MY_ITEMS"`
+	}
+	err := Apply(&stuff)
+	assert.NoError(t, err)
+	assert.False(t, stuff.RealData.Contains("abc"))
 }

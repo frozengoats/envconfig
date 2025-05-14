@@ -10,6 +10,13 @@ import (
 	"time"
 )
 
+type Set map[string]struct{}
+
+func (s Set) Contains(v string) bool {
+	_, ok := s[v]
+	return ok
+}
+
 type EnvConfigOption interface {
 	Name() string
 	Props() map[string]any
@@ -107,7 +114,12 @@ func setBool(fv reflect.Value, value string) error {
 	return nil
 }
 
-func setByteArray(fv reflect.Value, value string) error {
+func setByteArray(fv reflect.Value, value string, isEncoded bool) error {
+	if !isEncoded {
+		fv.SetBytes([]byte(value))
+		return nil
+	}
+
 	decBytes, err := base64.StdEncoding.DecodeString(value)
 	if err != nil {
 		return fmt.Errorf("environment variable was not encoded in standard base64")
@@ -117,7 +129,21 @@ func setByteArray(fv reflect.Value, value string) error {
 	return nil
 }
 
-func applyValue(fv reflect.Value, envValue string) error {
+func setSet(fv reflect.Value, value string) error {
+	newSet := Set{}
+	items := strings.Split(value, ",")
+	for _, item := range items {
+		if len(item) > 0 {
+			newSet[item] = struct{}{}
+		}
+	}
+
+	fv.Set(reflect.ValueOf(newSet))
+
+	return nil
+}
+
+func applyValue(fv reflect.Value, envValue string, isEncoded bool) error {
 	var err error
 	switch fv.Kind() {
 	case reflect.Int:
@@ -146,11 +172,19 @@ func applyValue(fv reflect.Value, envValue string) error {
 		fv.SetString(envValue)
 	case reflect.Bool:
 		err = setBool(fv, envValue)
+	case reflect.Map:
+		ifx := fv.Interface()
+		switch ifx.(type) {
+		case Set:
+			err = setSet(fv, envValue)
+		default:
+			return fmt.Errorf("unknown interface type built on map")
+		}
 	case reflect.Slice:
 		ifx := fv.Interface()
 		switch ifx.(type) {
 		case []byte:
-			err = setByteArray(fv, envValue)
+			err = setByteArray(fv, envValue, isEncoded)
 		default:
 			return fmt.Errorf("unknown interface type built on array")
 		}
@@ -190,6 +224,16 @@ func Apply(target any, options ...ConfigOption) error {
 		}
 
 		defaultVal := tag.Get("default")
+		isEnc := false
+		encoded := tag.Get("encoded")
+		switch encoded {
+		case "true":
+			isEnc = true
+		case "false", "":
+			isEnc = false
+		default:
+			return fmt.Errorf("encoded tag may only contain a value of true, false, or empty")
+		}
 
 		envValue := os.Getenv(envVar)
 		if envValue == "" {
@@ -200,7 +244,7 @@ func Apply(target any, options ...ConfigOption) error {
 			return fmt.Errorf("env var %s was not provided and has no default", envVar)
 		}
 		if envValue != "" {
-			err := applyValue(f, envValue)
+			err := applyValue(f, envValue, isEnc)
 			if err != nil {
 				return fmt.Errorf("parse error for env var %s: %w", envVar, err)
 			}
