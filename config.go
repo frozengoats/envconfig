@@ -226,11 +226,12 @@ func Apply(target any, options ...ConfigOption) error {
 		defaultVal := tag.Get("default")
 		isEnc := false
 		encoded := tag.Get("encoded")
-		if encoded == "true" {
+		switch encoded {
+		case "true":
 			isEnc = true
-		} else if encoded == "false" || encoded == "" {
+		case "false", "":
 			isEnc = false
-		} else {
+		default:
 			return fmt.Errorf("encoded tag may only contain a value of true, false, or empty")
 		}
 
